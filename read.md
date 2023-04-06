@@ -2,14 +2,16 @@
 ## Mini project to learn basic functionality of minIO storage with Go Client SDK
 
 ### Endpoints
- #### POST ```/bucket``` - creates a new bucket
+ #### POST ```/bucket``` - create a new bucket
  #### GET ```/buckets``` - get list of buckets
+ #### DELETE ```/bucket/remove``` - remove bucket (bucket should be empty to be removed)
  #### POST ```/upload``` - upload file to specific bucket
  #### POST ```/download``` - download file from specific bucket of storage
  #### GET ```/file``` - get download link of file  
+ #### POST ```/file/remove``` - remove file from bucket  
 
 
-### Creates a new bucket
+### Create a new bucket
 **POST** `/bucket`
 #### Request body:
     {
@@ -39,6 +41,22 @@ None
        "creationDate"  time.Time 
      }
     ]   
+##### Error:
+    {
+      "code"    int
+      "message" error_message
+    }
+
+### Remove bucket
+**DELETE** `/bucket/remove`
+#### Request body:
+**Query**: `title string`
+#### Responses:
+##### Success:
+     {
+      "code"    int
+      "message" "Successfully removed"
+    }
 ##### Error:
     {
       "code"    int
@@ -98,6 +116,25 @@ None
     {
       "code":    200
       "message": "<download link>"
+    }
+##### Error:
+    {
+      "code"    int
+      "message" error message
+    }
+
+### Remove file from specific bucket
+**POST** `/file/remove`
+#### Request body:
+    {
+      "bucketName"       string 
+	  "fileName"         string
+    }
+#### Responses:
+##### Success:
+    {
+      "code":    200
+      "message": "Successfully removed"
     }
 ##### Error:
     {

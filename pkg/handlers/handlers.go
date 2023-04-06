@@ -31,6 +31,7 @@ func (h *Handler) CreateBucket(w http.ResponseWriter, r *http.Request) {
 			Message: err.Error(),
 			Status:  http.StatusBadRequest,
 		})
+		return
 	}
 	var input models.BucketInput
 	if err = json.Unmarshal(body, &input); err != nil {
@@ -39,6 +40,7 @@ func (h *Handler) CreateBucket(w http.ResponseWriter, r *http.Request) {
 			Message: err.Error(),
 			Status:  http.StatusBadRequest,
 		})
+		return
 	}
 	err = h.storage.MakeBucket(r.Context(), input.BucketName, minio.MakeBucketOptions{})
 	if err != nil {
@@ -50,41 +52,7 @@ func (h *Handler) CreateBucket(w http.ResponseWriter, r *http.Request) {
 				Status:  http.StatusBadRequest,
 			})
 			return
-		} else {
-			GenerateResponse(models.ResponseParam{
-				W:       w,
-				Message: err.Error(),
-				Status:  http.StatusInternalServerError,
-			})
-			return
 		}
-	}
-	GenerateResponse(models.ResponseParam{
-		W:       w,
-		Message: "Successfully created",
-		Status:  http.StatusOK,
-	})
-}
-
-func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		GenerateResponse(models.ResponseParam{
-			W:       w,
-			Message: err.Error(),
-			Status:  http.StatusBadRequest,
-		})
-	}
-	var input models.UploadInput
-	if err = json.Unmarshal(body, &input); err != nil {
-		GenerateResponse(models.ResponseParam{
-			W:       w,
-			Message: err.Error(),
-			Status:  http.StatusBadRequest,
-		})
-	}
-	info, err := h.storage.FPutObject(r.Context(), input.BucketName, input.FileName, input.FilePath, minio.PutObjectOptions{ContentType: input.ContentType})
-	if err != nil {
 		GenerateResponse(models.ResponseParam{
 			W:       w,
 			Message: err.Error(),
@@ -94,60 +62,10 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	GenerateResponse(models.ResponseParam{
 		W:       w,
-		Message: fmt.Sprintf("Successfully uploaded %s of size %d \n", input.FileName, info.Size),
+		Message: "Successfully created",
 		Status:  http.StatusOK,
 	})
-}
-
-func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		GenerateResponse(models.ResponseParam{
-			W:       w,
-			Message: err.Error(),
-			Status:  http.StatusBadRequest,
-		})
-	}
-	var input models.DownloadInput
-	if err = json.Unmarshal(body, &input); err != nil {
-		GenerateResponse(models.ResponseParam{
-			W:       w,
-			Message: err.Error(),
-			Status:  http.StatusBadRequest,
-		})
-	}
-	object, err := h.storage.GetObject(r.Context(), input.BucketName, input.FileName, minio.GetObjectOptions{})
-	if err != nil {
-		GenerateResponse(models.ResponseParam{
-			W:       w,
-			Message: err.Error(),
-			Status:  http.StatusInternalServerError,
-		})
-	}
-	defer object.Close()
-
-	localFile, err := os.Create(input.DestinationPath)
-	if err != nil {
-		GenerateResponse(models.ResponseParam{
-			W:       w,
-			Message: err.Error(),
-			Status:  http.StatusInternalServerError,
-		})
-	}
-	defer localFile.Close()
-
-	if _, err = io.Copy(localFile, object); err != nil {
-		GenerateResponse(models.ResponseParam{
-			W:       w,
-			Message: err.Error(),
-			Status:  http.StatusInternalServerError,
-		})
-	}
-	GenerateResponse(models.ResponseParam{
-		W:       w,
-		Message: fmt.Sprintf("Successfully downloaded in %s", input.DestinationPath),
-		Status:  http.StatusOK,
-	})
+	return
 }
 
 func (h *Handler) GetBuckets(w http.ResponseWriter, r *http.Request) {
@@ -167,9 +85,158 @@ func (h *Handler) GetBuckets(w http.ResponseWriter, r *http.Request) {
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
 		})
+		return
 	}
 	w.Write(response)
 	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func (h *Handler) RemoveBucket(w http.ResponseWriter, r *http.Request) {
+	bucketName := r.URL.Query().Get("title")
+	if err := h.storage.RemoveBucket(r.Context(), bucketName); err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusInternalServerError,
+		})
+		return
+	}
+	GenerateResponse(models.ResponseParam{
+		W:       w,
+		Message: "Successfully removed",
+		Status:  http.StatusOK,
+	})
+	return
+}
+
+func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusBadRequest,
+		})
+		return
+	}
+	var input models.UploadInput
+	if err = json.Unmarshal(body, &input); err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusBadRequest,
+		})
+		return
+	}
+	info, err := h.storage.FPutObject(r.Context(), input.BucketName, input.FileName, input.FilePath, minio.PutObjectOptions{ContentType: input.ContentType})
+	if err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusInternalServerError,
+		})
+		return
+	}
+	GenerateResponse(models.ResponseParam{
+		W:       w,
+		Message: fmt.Sprintf("Successfully uploaded %s of size %d \n", input.FileName, info.Size),
+		Status:  http.StatusOK,
+	})
+	return
+}
+
+func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusBadRequest,
+		})
+		return
+	}
+	var input models.DownloadInput
+	if err = json.Unmarshal(body, &input); err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusBadRequest,
+		})
+		return
+	}
+	object, err := h.storage.GetObject(r.Context(), input.BucketName, input.FileName, minio.GetObjectOptions{})
+	if err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusInternalServerError,
+		})
+		return
+	}
+	defer object.Close()
+
+	localFile, err := os.Create(input.DestinationPath)
+	if err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusInternalServerError,
+		})
+		return
+	}
+	defer localFile.Close()
+
+	if _, err = io.Copy(localFile, object); err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusInternalServerError,
+		})
+		return
+	}
+	GenerateResponse(models.ResponseParam{
+		W:       w,
+		Message: fmt.Sprintf("Successfully downloaded in %s", input.DestinationPath),
+		Status:  http.StatusOK,
+	})
+	return
+}
+
+func (h *Handler) RemoveFile(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusBadRequest,
+		})
+		return
+	}
+	var input models.GetFile
+	if err = json.Unmarshal(body, &input); err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusBadRequest,
+		})
+		return
+	}
+	err = h.storage.RemoveObject(r.Context(), input.BucketName, input.FileName, minio.RemoveObjectOptions{})
+	if err != nil {
+		GenerateResponse(models.ResponseParam{
+			W:       w,
+			Message: err.Error(),
+			Status:  http.StatusInternalServerError,
+		})
+		return
+	}
+	GenerateResponse(models.ResponseParam{
+		W:       w,
+		Message: "Successfully removed",
+		Status:  http.StatusOK,
+	})
+	return
 }
 
 func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
@@ -208,6 +275,7 @@ func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
 		Message: presignedUrl.String(),
 		Status:  http.StatusOK,
 	})
+	return
 }
 
 func GenerateResponse(param models.ResponseParam) {
