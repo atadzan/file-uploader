@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/atadzan/file-uploader/models"
@@ -10,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -276,6 +279,42 @@ func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
 		Status:  http.StatusOK,
 	})
 	return
+}
+
+func (h *Handler) Test(w http.ResponseWriter, r *http.Request) {
+	dirPath := "/home/belet/Desktop/test/hls/2602/20474"
+
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Println("error while in Walk. Error: ", err.Error())
+			return err
+		}
+		if !info.IsDir() {
+			//	Read file contents
+			data, errRead := os.ReadFile(path)
+			if errRead != nil {
+				log.Println("error while reading file content.Error: ", errRead.Error())
+			}
+			//Set the object name
+			fmt.Println("Full path: ", path, " last path: ", path[len(dirPath)+1:])
+
+			objectName := filepath.Join("2602/20474", path[len(dirPath)+1:])
+
+			// Upload the file to minIO
+			_, err = h.storage.PutObject(context.Background(), "videos", objectName, bytes.NewReader(data), info.Size(), minio.PutObjectOptions{
+				ContentType: "application/vnd.apple.mpegurl",
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		log.Println("error: ", err.Error())
+		return
+	}
+	fmt.Println("Finish")
 }
 
 func GenerateResponse(param models.ResponseParam) {
