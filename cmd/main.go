@@ -21,10 +21,11 @@ func main() {
 	http.HandleFunc("/download", h.DownloadFile)
 	http.HandleFunc("/file", h.GetFile)
 	http.HandleFunc("/file/remove", h.RemoveFile)
-	http.HandleFunc("/test", h.Test)
+	//http.HandleFunc("/test", h.Test)
+	http.HandleFunc("/test", h.TestUpload)
 
 	fmt.Println("Server is listening on :8002.. ")
-	if err = http.ListenAndServe("localhost:8002", nil); err != nil {
+	if err = http.ListenAndServe("localhost:8003", nil); err != nil {
 		log.Fatalf("Error while initializing app. Error: %v \n", err)
 	}
 

@@ -26,6 +26,16 @@ func NewHandler(minio *minio.Client) *Handler {
 	}
 }
 
+func (h *Handler) TestUpload(w http.ResponseWriter, r *http.Request) {
+	resp, err := http.Get("http://213.136.90.104:8087/file?path=/go/app/assets/images/videos/thumbnails/yar3CGFjoBA_320.jpg")
+	if err != nil {
+		log.Println("can't get image response. Error ", err.Error())
+	}
+	_, err = h.storage.PutObject(context.Background(), "videos", "testImage1.jpg", resp.Body, resp.ContentLength, minio.PutObjectOptions{
+		ContentType: "image/jpg",
+	})
+}
+
 func (h *Handler) CreateBucket(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {

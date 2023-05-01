@@ -9,13 +9,20 @@ import (
 )
 
 func NewMinioClient() (*minio.Client, error) {
-	endpoint := "192.168.1.61:9099"
+	//endpoint := "0.0.0.0:9099"
+	endpoint := "0.0.0.0:9007"
 	//accessKeyId := "MKJdVEufsJngEP8D"
-	accessKeyId := "fxCbzOL1BiTYb2f1"
+	//accessKeyId := "fxCbzOL1BiTYb2f1"
+	//accessKeyId := "HaEo2AXVcgDu4pNf"
+	//accessKeyId := "F5ZuXhBl8i0xYxEf"
+	accessKeyId := "myminioadmin"
 	//accessKeyId := "et2MPdWYdNPyigBU"
 	//accessKeyId := "rtHvlzo9Sbhpg3bb"
 	//secretAccessKey := "1CyMiAdvJFBEgWLyAZM0ukQNesctJbe5"
-	secretAccessKey := "BXpAbcwRp7dTM1IVijqYD3ojbl2jMijc"
+	//secretAccessKey := "BXpAbcwRp7dTM1IVijqYD3ojbl2jMijc"
+	//secretAccessKey := "fRoX9GGT0vqAERXEbNEvRfzvPkPAaTJw"
+	//secretAccessKey := "UCcUW20eo86H2eiPYtscBha4HPRF9GaV"
+	secretAccessKey := "myminiopassword"
 	//secretAccessKey := "SAm0PBUOxzv0dqmzu65gEd6vJFnJxS0o"
 	//secretAccessKey := "hgzfhn3DqlaVs03QFAqRqumrDMurZTEk"
 
