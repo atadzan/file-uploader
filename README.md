@@ -139,5 +139,5 @@ None
 ##### Error:
     {
       "code"    int
-      "message" error message
+      "message" error 
     }
